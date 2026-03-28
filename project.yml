@@ -1,0 +1,23 @@
+name: SheetMusicManager
+options:
+  bundleIdPrefix: com.thivanao
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+settings:
+  SWIFT_VERSION: "6.0"
+targets:
+  SheetMusicManager:
+    type: application
+    platform: iOS
+    sources:
+      - SheetMusicManager
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.thivanao.sheet-music-manager
+      GENERATE_INFOPLIST_FILE: YES
+      INFOPLIST_VALUES:
+        CFBundleDisplayName: 楽譜管理
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+      SWIFT_STRICT_CONCURRENCY: complete
