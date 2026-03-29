@@ -1,12 +1,14 @@
 import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct SheetMusicDetailView: View {
     @Bindable var sheetMusic: SheetMusic
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Tag.name) private var allTags: [Tag]
-    @State private var isEditingTitle = false
-    @State private var editedTitle = ""
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var showingCamera = false
+    @State private var showingPhotoActions = false
 
     var body: some View {
         ScrollView {
@@ -18,19 +20,21 @@ struct SheetMusicDetailView: View {
                         .resizable()
                         .scaledToFit()
                         .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .onTapGesture { showingPhotoActions = true }
                 } else {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color.gray.opacity(0.1))
                         .frame(height: 200)
                         .overlay {
                             VStack(spacing: 8) {
-                                Image(systemName: "music.note")
+                                Image(systemName: "camera.fill")
                                     .font(.largeTitle)
-                                Text("写真なし")
+                                Text("タップして写真を追加")
                                     .font(.caption)
                             }
                             .foregroundStyle(.secondary)
                         }
+                        .onTapGesture { showingPhotoActions = true }
                 }
 
                 // メモ
@@ -94,6 +98,38 @@ struct SheetMusicDetailView: View {
         }
         .navigationTitle(sheetMusic.title)
         .navigationBarTitleDisplayMode(.large)
+        .confirmationDialog("写真", isPresented: $showingPhotoActions) {
+            PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                Text("アルバムから選択")
+            }
+            Button("カメラで撮影") {
+                showingCamera = true
+            }
+            if sheetMusic.imageData != nil {
+                Button("写真を削除", role: .destructive) {
+                    sheetMusic.imageData = nil
+                    sheetMusic.updatedAt = Date()
+                }
+            }
+        }
+        .onChange(of: selectedPhoto) { _, newItem in
+            Task {
+                if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                    sheetMusic.imageData = data
+                    sheetMusic.updatedAt = Date()
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showingCamera) {
+            CameraView(imageData: Binding(
+                get: { sheetMusic.imageData },
+                set: { newData in
+                    sheetMusic.imageData = newData
+                    sheetMusic.updatedAt = Date()
+                }
+            ))
+            .ignoresSafeArea()
+        }
     }
 }
 
